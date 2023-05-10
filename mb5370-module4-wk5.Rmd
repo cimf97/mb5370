@@ -1,0 +1,223 @@
+---
+title: "mb5370-module4-wk5"
+author: "Carolina Freitas"
+date: '2023-05-10'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#-------------------------------------------#
+
+#-------------------------------------------#
+# Workshop. 05 Spatial data in R ####
+
+
+# 6.4 installing spatial R packages ####
+```{r}
+#installing and loading packages
+#install.packages("sf") 
+#install.packages("terra")
+#install.packages("tmap")
+
+
+#load into R library
+library(tidyverse)
+library(sf) # simple features
+library (terra) # for rasters
+library(tmap) # Thematic maps are geographical maps in which spatial data distributions are visualized
+
+
+```
+
+#-------------------------------------------#
+
+#-------------------------------------------#
+#6.6 Loading a spatial dataset ####
+```{r}
+#load copepod data
+library(readr)
+dat <- read_csv("data/copepods_raw.csv")
+dat
+```
+#-------------------------------------------#
+
+#-------------------------------------------#
+#6.7 Data Exploration ####
+#6.7.1 Check coordinates
+```{r}
+#First we plot coordinates for the samples using ggplot2
+
+library(ggplot2)
+ggplot(dat) +
+  aes(x = longitude, y = latitude, color = richness_raw) +
+  geom_point()
+#however, this a scatter plot and measuring distances with a ruler will probably be wrong
+```
+```{r}
+ggplot(dat, aes(x = latitude, y = richness_raw)) + 
+  stat_smooth() + 
+  geom_point()
+```
+##Note: when getting to know the data, it is useful to make lots of plots to become familiar with waht each variable represents
+
+#-------------------------------------------#
+
+#-------------------------------------------#
+#6.8 Getting going with maps ####
+```{r}
+#using the sf package (simple features)
+sdat <- st_as_sf(dat, coords = c("longitude", "latitude"), 
+                 crs = 4326)
+#We use ?sf_as_sf to see what the function does.
+#sf_as_sf converts different data types to simple features
+#Coords gives the name of the columns that relate to the spatial coordinates
+#crs stands for coordinate reference system
+```
+
+#-------------------------------------------#
+
+#-------------------------------------------#
+#6.9 Coordinate reference systems ####
+
+##Note:  EPSG code:a unique, short-hand code for a specific coordinate reference system (CRS).
+```{r}
+crs4326 <- st_crs(4326)
+crs4326 # look at the whole CRS
+crs4326$Name # pull out just the name of the crs
+
+#See what the well-known text (wkt) looks like:
+crs4326$wkt # crs in well-known text format
+
+```
+##Note: to map our data in 2D we need to decide how to project 3 dimensions into 2. spatial packages in R use the software PROJ to do this
+
+#-------------------------------------------#
+
+#-------------------------------------------#
+#6.10 Feature collection ####
+```{r}
+#call sdat to see what was created
+sdat # a geometry column was added
+```
+
+#-------------------------------------------#
+
+#-------------------------------------------#
+#6.11 Cartography ####
+```{r}
+#using sf to map
+plot(sdat["richness_raw"]) #only the richness column was plotted
+#if:
+plot(sdat) # then each column is plotted as separate subplots
+```
+#-------------------------------------------#
+
+#-------------------------------------------#
+#6.12 Thematic maps for communication ####
+```{r}
+#using tmap
+tm1 <-  tm_shape(sdat) + 
+  tm_dots(col = "richness_raw")
+tm1 #tm_dots plots dots of the coordinates but there are others such as tm_polygon or tm_symbols. Richness_raw was chosen as the color scale.
+#Changing the color scale
+
+tm2 <- tm_shape(sdat) +
+  tm_dots(col = "#E31A1C")
+tm2
+
+tm3 <- tm_shape(sdat) +
+  tm_dots(col = "#B2DF8A")
+tm3
+
+
+```
+
+```{r}
+#save map to working directory
+tmap_save(tm1, filename = "Richness-map.png", 
+          width = 600, height = 600)
+```
+#-------------------------------------------#
+
+#-------------------------------------------#
+#6.13 Mapping spatial polygons as layers ####
+#6.13.1 loading shapefiles
+```{r}
+#The polygons in the copepod data are stored in shapefiles. .shp files are generally considered undesirable file formats as they are inefficient at storing data. Multiple files are created when saving a shape file 
+
+#A better format is the Geopackage which saves and compresses multiple different data types all in a single file. However, in this workshop shapefiles will be used
+
+#Reading .shp files into R
+aus <- st_read("data/spatial-data/Aussie/Aussie.shp")
+```
+```{r}
+shelf <- st_read("data/spatial-data/aus_shelf/aus_shelf.shp")
+
+aus
+```
+#6.13.2 mapping polygons
+```{r}
+#using tmap
+tm_shape(shelf) +
+  tm_polygons()
+
+#adding commands to expand the extent of the map to show copepod data
+tm_shape(shelf, bbox = sdat) + 
+  tm_polygons() +
+  tm_shape(aus) + 
+  tm_polygons() + 
+  tm_shape(sdat) + 
+  tm_dots()
+```
+#-------------------------------------------#
+
+#-------------------------------------------#
+#6.14 Exploring t_map ####
+```{r}
+#Reading on tmap
+vignette('tmap-getstarted')
+```
+
+```{r}
+
+tm_shape(shelf, bbox = sdat) + 
+  tm_polygons() +
+  tm_shape(aus) + 
+  tm_polygons() + 
+  tm_shape(sdat) + 
+  tm_dots(col = "richness_raw", 
+          palette = "Blues", 
+          title = "Species")  +
+  #tmap_style("beaver")
+  # australia becomes yellow and copepods red
+  tmap_style("natural") + 
+  tm_compass() # Adds north arrow
+
+
+ 
+```
+```{r}
+#https://www.seascapemodels.org/spatial-analysis-in-r/spatial-analysis-in-r.html#11_Shape_data_and_maps
+#Importing raster data and combining it with polygon, .shp and point data
+rsst <- rast('data/MeanAVHRRSST.grd')
+plot(rsst)
+routes <- read_csv("data/Route-data.csv")
+sdat_std <- inner_join(sdat, routes, by = "route")
+nrow(sdat)
+```
+
+
+
+```{r}
+tm_shape(rsst) + 
+  tm_raster(palette = "-RdBu", title = "SST") + 
+  tm_shape(sdat_std) + 
+  tm_dots(col = "richness_raw", 
+          palette = "Greens", 
+          title = "Species #") + 
+  tm_compass() 
+```
+

@@ -1,0 +1,292 @@
+---
+title: "mb5370_module4_section5"
+author: "Carolina Freitas"
+date: '2023-05-09'
+output: html_document
+---
+
+#-------------------------------------------#
+
+#-------------------------------------------#
+# Workshop. 04 Data Wrangling in R  ####
+
+
+# 5.3 Tibble #### 
+
+```{r}
+library(tidyverse)
+#To turn regular dataframes into tibbles
+as_tibble(iris)
+#can also create a tibble from individual vectors. it does not change input types, names of variables or create row names.
+tibble(
+   x = 1:5,
+   y = 1,
+   z = x ^ 2 + y
+  
+)
+#tibbles can be non-syntactic names like:
+tb <- tibble(
+  ':)' = "smile",
+  ' ' = "space",
+  '2000' = "number"
+)
+tb
+
+#can also create tibble using the function tribble()
+tribble(
+  ~x, ~y, ~z,
+  #--|--|----
+  "a", 2, 3.6,
+  "b", 1, 8.5
+)
+
+# tibbles also print the type of each column variable next to their name. That way we can understadn the data format a lot easier
+
+tibble(
+  a = lubridate::now() + runif(1e3) *86400,
+  b = lubridate::today() + runif(1e3) * 30,
+  c = 1:1e3,
+  d = runif(1e3),
+  e = sample(letters, 1e3, replace = TRUE)
+)
+
+#We can use print to designate the number of rows and display width. width = Inf displays every column
+install.packages("nycflights13")
+library(nycflights13)
+nycflights13::flights %>% 
+  print(n = 10, width = Inf)
+
+#: is used if more than n rows, print only m rows.
+#Can also set global options for R using this:
+options(tibble.width = Inf)
+#we can pull a single variable from the dataframe in many ways:
+df <- tibble(
+  x = runif(5),
+  y = rnorm(5)
+)
+
+# Extract by name
+df$x
+df[["x"]]
+
+# Extract by row position
+df[[1]]
+df[[2,2]]
+
+#Intro to pipes
+df %>% .$x
+df %>% .[["x"]]
+
+#NOTE: if the variable called out doesn't match what's in the df, tibbles will generate a warning.
+
+```
+#-------------------------------------------#
+
+#-------------------------------------------#
+
+# 5.4 Importing data
+```{r}
+library(readr)
+read_csv("a,b,c
+1,2,3
+4,5,6")
+
+#if there is metadata at the top of the file, we might want to skip these lines
+
+read_csv("The first line of metadata
+  The second line of metadata
+  x,y,z
+  1,2,3", skip = 2)
+
+read_csv("# A comment I want to skip
+  x,y,z
+  1,2,3", comment = "#")
+
+#If the data does not contain column names:
+read_csv("1,2,3\n4,5,6", col_names = FALSE)
+#adding a new line to the data using \n
+read_csv("1,2,3\n4,5,6", col_names = c("x", "y", "z"))
+
+#Tweaking na, which specifies the value that represent missing values in the file
+read_csv("a,b,c\n1,2,.", na = ".")
+```
+#-------------------------------------------#
+
+#-------------------------------------------#
+# 5.5 Tidying data using Tidyr
+
+```{r}
+#We can tidy by using the mutate(function)
+#EXAMPLE BELOW:
+table1 %>% 
+  mutate(rate = cases / population * 10000)
+# Here we can compute the rate per 10,000 people
+#Or compute cases per year:
+count(year, wt = cases)
+#We can also visualise chnage over time
+library(ggplot2)
+ggplot(table1, aes(year, cases)) + 
+  geom_line(aes(group = country), colour = "grey50") + 
+  geom_point(aes(colour = country))
+```
+
+#-------------------------------------------#
+
+#-------------------------------------------#
+# 5.5.2 Spreading an gathering data tables
+```{r}
+#A common problem is a dataset where some column names are not names of variables but values of a variable. To fix this we can use pivot_longer()
+table3%>%
+pivot_longer(c(`1999`, `2000`), names_to = "year", values_to = "cases")
+#this moves the 1999 and 2000 from column names to rows under the column named year
+table3%>%
+pivot_wider(names_from = type, values_from = count)
+#this makes the table shorter and wider by creating new columns
+```
+#-------------------------------------------#
+
+#-------------------------------------------#
+# 5.5.3 separating and uniting data tables
+```{r}
+#for example we can separate the rate into two variables such as population and cases using the examples above.
+table3%>%
+separate(rate, into = c("cases", "population"))
+
+#However if the the values in those columns are numbers as is the case then we need to convert them to better types. They were listed as characters. To fix this:
+table3 %>% 
+  separate(rate, into = c("cases", "population"), convert = TRUE)
+#We can also use unite() to combine multiple columns into a single column.
+table5 %>% 
+  unite(new, century, year, sep = "")
+```
+#-------------------------------------------#
+
+#-------------------------------------------#
+# 5.5.4 Handling missing values
+```{r}
+#Example dataset with missing number
+stocks <- tibble(
+  year   = c(2015, 2015, 2015, 2015, 2016, 2016, 2016),
+  qtr    = c(   1,    2,    3,    4,    2,    3,    4),
+  return = c(1.88, 0.59, 0.35,   NA, 0.92, 0.17, 2.66)
+)
+
+#We can turn these explicit missing values implicit by using values_drop_na = TRUE
+stocks %>% 
+  pivot_wider(names_from = year, values_from = return) %>% 
+  pivot_longer(
+    cols = c(`2015`, `2016`), 
+    names_to = "year", 
+    values_to = "return", 
+    values_drop_na = TRUE
+  )
+#this deletes the row with the na value
+
+#We can also make values explicit by including them in the data using the complete function
+stocks %>% 
+  complete(year, qtr)
+#Or use the fill function to fill in missing values that were meant to be carried forward
+
+treatment <- tribble(
+  ~ person,           ~ treatment, ~response,
+  "Derrick Whitmore", 1,           7,
+  NA,                 2,           10,
+  NA,                 3,           9,
+  "Katherine Burke",  1,           4
+)
+treatment
+
+treatment %>% 
+  fill(person)
+```
+#-------------------------------------------#
+
+#-------------------------------------------#
+# 5.6 Learning Rational Data
+
+#Simply put, relational data is a collection of multiple data tables in a given dataset or in a project that are related in some ways.
+#3 main verbs: mutating joins, filtering joins and set operations
+```{r}
+library(tidyverse)
+library(nycflights13)
+```
+
+#5.6.1 Joining Datasets
+# we join datasets togerther by identifying the keys. A key is a variable that uniquely identifies an observation
+#A primary key uniquely identifies an observation in its own table. For example, planes$tailnum is a primary key because it uniquely identifies each plane in the planes table
+#A foreign key uniquely identifies an observation in another table. For example, flights$tailnum is a foreign key because it appears in the flights table where it matches each flight to a unique plane.
+```{r}
+#One way to uniquely identify each observation is to use count() and look for entries where n is greater than one
+planes %>% 
+  count(tailnum) %>% 
+  filter(n > 1)
+weather %>% 
+  count(year, month, day, hour, origin) %>% 
+  filter(n > 1)
+```
+
+#5.6.2 Mutating joins
+```{r}
+#if a table lacks a primary key, it is useful to add one using mutate()and row_number()
+flights2 <- flights %>% 
+  select(year:day, hour, origin, dest, tailnum, carrier)
+
+flights2 %>%
+  select(-origin, -dest) %>% 
+  left_join(airlines, by = "carrier")
+
+flights2 %>%
+  select(-origin, -dest) %>% 
+  mutate(name = airlines$name[match(carrier, airlines$carrier)])
+
+#to explore mutate () further 
+x <- tribble(
+  ~key, ~val_x,
+     1, "x1",
+     2, "x2",
+     3, "x3"
+)
+y <- tribble(
+  ~key, ~val_y,
+     1, "y1",
+     2, "y2",
+     4, "y3"
+)
+x %>% 
+  inner_join(y, by = "key")
+
+```
+#Filtering joins
+```{r}
+top_dest <- flights %>%
+  count(dest, sort = TRUE) %>%
+  head(10)
+top_dest
+```
+#-------------------------------------------#
+
+#-------------------------------------------#
+
+#5.7 Pipes for more readable workflow
+```{r}
+# Pipes allow us to code data wrangling steps into a series of sequential actions on a single data frame
+ # Pipes to tell a kid's story
+library(magrittr)
+
+foo_foo <- little_bunny
+foo_foo_1 <- hop(foo_foo, through = forest)
+foo_foo_2 <- scoop(foo_foo_1, up = field_mice)
+foo_foo_3 <- bop(foo_foo_2, on = head)
+
+#We can use a pipe instead which makes it shorter and easier to consume
+foo_foo %>%
+  hop(through = forest) %>%
+  scoop(up = field_mice) %>%
+  bop(on = head)
+
+
+
+```
+
+
+

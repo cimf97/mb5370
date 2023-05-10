@@ -10,60 +10,20 @@ output: html_document
 ```{r}
 setwd("~/JCU/MB5370/Module 4/github/mb5370/data")
 ```
-
-#5.3 Tibble 
-
-```{r}
-library(tidyverse)
-#To turn regular dataframes into tibbles
-as_tibble(iris)
-#can also create a tibble from individual vectors. it does not change input types, names of variables or create row names.
-tibble(
-   x = 1:5,
-   y = 1,
-   z = x ^ 2 + y
-  
-)
-#tibbles can be non-syntactic names like:
-tb <- tibble(
-  ':)' = "smile",
-  ' ' = "space",
-  '2000' = "number"
-)
-tb
-
-#can also create tibble using the function tribble()
-tribble(
-  ~x, ~y, ~z,
-  #--|--|----
-  "a", 2, 3.6,
-  "b", 1, 8.5
-)
-
-```
-```{r}
-#Compare df to tibbles
-#tibbles make printing easier and help avoid overloading the console when working with large datasets
-
-df <- data.frame(abc = 1, xyz = "a")
-df$x
-df[, "xyz"]
-df[, c("abc", "xyz")]
-
-```
 ## QFISH
 
 ```{r}
-#Importing Qfish data
+#Importing QFish data
 library (readr)
-setwd("~/JCU/MB5370/Module 4/github/mb5370/data")
-shark <- read.csv("sharkcontrol.csv")
+#setwd("~/JCU/MB5370/Module 4/github/mb5370/data")
+shark <- read.csv("data/sharkcontrol.csv")
 ```
 
 ```{r}
-#Getting rid of NA values
+#Getting rid of NA values and replacing them with 0
 
 shark <- as.data.frame(lapply(shark, function(x) gsub("^\\s*$", "0", x)))
+#
 ```
 
 
@@ -75,6 +35,7 @@ shark_new <- setNames(shark, c("Area", paste(names(shark), unlist(shark[1, ], us
   slice(-1) %>% 
   pivot_longer(-Area) %>% 
   separate(name, into = c("Year", "SpeciesGroup"), sep = "_")
+#stringr function for year problem
 ```
 
 
@@ -89,6 +50,7 @@ shark_new<- select(shark_new, -RowName)
 ```
 
 ```{r}
+#Remove prefix Area. and X from columns 1 and 2
 shark_new <- shark_new %>%
   mutate(Area = sub("^Area\\.", "", Area),
          Year = sub("^X", "", Year))
