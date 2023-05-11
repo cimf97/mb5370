@@ -21,7 +21,7 @@ shark <- read.csv("data/sharkcontrol.csv")
 ```{r}
 #Ensures every blank space is identified as a blank space
 
-shark_clean <- as.data.frame(lapply(shark, function(x) gsub("^\\s*$", "", x)))
+shark <- as.data.frame(lapply(shark, function(x) gsub("^\\s*$", "", x)))
 # ^ represents the start of line
 #\\s matches any whitespace character
 #* specifies that the previous symbol "\\s" can occur zero or more times. 
@@ -33,7 +33,7 @@ shark_clean <- as.data.frame(lapply(shark, function(x) gsub("^\\s*$", "", x)))
 ```{r}
 library(dplyr)
 library(tidyr)
-shark_table <- setNames(shark_clean, c("Area", paste(names(shark_clean), unlist(shark_clean[1, ], use.names = FALSE), sep = "_")[-1])) %>% 
+shark_table <- setNames(shark, c("Area", paste(names(shark), unlist(shark[1, ], use.names = FALSE), sep = "_")[-1])) %>% 
   slice(-1) %>% 
   pivot_longer(-Area) %>% 
   separate(name, into = c("Year", "SpeciesGroup"), sep = "_")
@@ -59,10 +59,18 @@ colnames(shark_table)[colnames(shark_table) == "value"] <- "Catches"
 #install.packages("stringr")
 library(stringr)
 shark_table <- shark_table[!str_detect(shark_table$Year, "Total"), ]
+
 ```
 
 ```{r}
 #Remove the suffix in the years. e.g. 2001.1 is replaced by 2001
 shark_table$Year <- str_remove(shark_table$Year, "\\..*")
+```
+
+```{r}
+#Remove all rows with blank cells
+shark_clean <- subset(shark_table, !is.na(Catches) & nzchar(as.character(Catches)))
+#subset() function is used to filter the dataframe based on the !is.na and nzchar condition.
+#this condition selects the rows where the cells under the column Catches is not empty
 ```
 
