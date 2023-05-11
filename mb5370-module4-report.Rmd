@@ -55,10 +55,11 @@ colnames(shark_table)[colnames(shark_table) == "value"] <- "Catches"
 ```
 
 ```{r}
-#Remove all rows with totals
+#Remove all rows with totals and grand totals
 #install.packages("stringr")
 library(stringr)
-shark_table <- shark_table[!str_detect(shark_table$Year, "Total"), ]
+
+shark_table <- shark_table[!str_detect(shark_table$Area, "Grand Total") & !str_detect(shark_table$Year, "Total"), ]
 
 ```
 
@@ -73,4 +74,32 @@ shark_clean <- subset(shark_table, !is.na(Catches) & nzchar(as.character(Catches
 #subset() function is used to filter the dataframe based on the !is.na and nzchar condition.
 #this condition selects the rows where the cells under the column Catches is not empty
 ```
+
+# Plotting the data into a timeseries ####
+```{r}
+#converting catches values to numerical data
+shark_clean$Catches <- as.numeric(shark_clean$Catches)
+```
+
+```{r}
+# creating a data table for the timeseries
+
+totals_per_year <- shark_clean %>%
+  group_by(Year, SpeciesGroup) %>%
+  summarise(TotalCatches = sum(Catches))
+
+# View the resulting table
+print(totals_per_year)
+```
+
+
+```{r}
+ggplot(totals_per_year, aes(x = Year, y = TotalCatches, color = SpeciesGroup, group = SpeciesGroup)) +
+  theme_minimal() +
+  geom_line() +
+  labs(x = "Year", y = "Total Catches", color = "Species Group") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+ 
+```
+
 
