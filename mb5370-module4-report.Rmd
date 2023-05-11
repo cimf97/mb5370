@@ -101,5 +101,20 @@ ggplot(totals_per_year, aes(x = Year, y = TotalCatches, color = SpeciesGroup, gr
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
  
 ```
+```{r}
+#Organising the data to plot number of catches per area
+# Aggregate the data to calculate total catches per area and species group
+totals_per_area <- aggregate(Catches ~ Area + SpeciesGroup, data = shark_clean, FUN = sum)
+```
 
+```{r}
+# Create the bar plot
+ggplot(totals_per_area, aes(x = Area, y = Catches, fill = SpeciesGroup)) +
+  theme_minimal() +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Area", y = "Total Catches") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+  #scale_fill_manual(values = c("Mammal" = "red", "Other" = "blue", "Turtle" = "green", "Shark" = "orange")) 
+ # theme_bw()
+```
 
