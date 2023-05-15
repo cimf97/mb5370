@@ -1,0 +1,62 @@
+---
+title: "Module04_Homework"
+author: "Carolina Freitas"
+date: '2023-05-03'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Setting directory and activating libraries
+
+```{r}
+setwd("~/JCU/MB5370/Module 4/R script") #sets work directory
+
+library(tidyverse)
+library(ggplot2)
+```
+
+#Loading data 
+```{r}
+co2 <- read.csv("Homework_data.csv")
+Industrial.combustion <- co2$Power.industry +co2$Other.industrial.combustion
+co2_new <- cbind(co2, Industrial.combustion)
+
+```
+
+
+# Plotting
+
+```{r}
+library(reshape2)
+library(viridis)
+library(colorspace)
+
+co2.long <- melt(co2_new, id = "Year", measure = c("Industrial.combustion", "Buildings", "Transport", "Other.sectors", "Total")) #ggplot likes the long format so we melt it. The new data (co2_long shows )
+
+base <- ggplot(co2.long, aes(Year, value, colour = variable)) + 
+  geom_line(size=1)+
+  theme_classic()+
+    labs(
+    x = "Year",
+    y = expression("Gt CO"[2]/yr),
+    title = expression("Annual Global Emissions of Fossil CO"[2]*" per Sector"),
+    color = "")+
+    #scale_color_discrete(labels = c("Industrial.combustion", "Buildings", "Transport", "Other", "Total"))+
+  scale_color_manual(values = c("Industrial.combustion" = "1f77b4", "Buildings" = "orange", "Transport" = "#2ca02c", "Other.sectors" = "#9467bd", "Total" = "#d62728"))+
+  scale_x_continuous(breaks = seq(1970, 2017, 2))+
+  scale_y_continuous(breaks = seq(0, 38, 5))+
+  #scale_y_log10()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  theme(plot.title = element_text(hjust = 0.5))+
+  geom_vline(xintercept=2009,linetype=3)+
+  geom_vline(xintercept=2002, linetype=3)
+base + theme(legend.position = "bottom")
+
+
+
+```
+
+
