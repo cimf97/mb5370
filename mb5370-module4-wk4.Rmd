@@ -1,5 +1,5 @@
 ---
-title: "mb5370_module4_section5"
+title: "mb5370_module4_wk4"
 author: "Carolina Freitas"
 date: '2023-05-09'
 output: html_document
@@ -7,8 +7,10 @@ output: html_document
 
 #-------------------------------------------#
 
-#-------------------------------------------#
 # Workshop. 04 Data Wrangling in R  ####
+
+#-------------------------------------------#
+
 
 
 # 5.3 Tibble #### 
