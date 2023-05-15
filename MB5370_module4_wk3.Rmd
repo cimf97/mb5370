@@ -1,0 +1,46 @@
+---
+title: "MB5370_module4_2"
+author: "Carolina Freitas"
+date: '2023-05-03'
+output: html_document
+---
+
+#---------------------------------------------------#
+
+#Module 04 - Workshop 03 and 04
+
+#---------------------------------------------------#
+
+```{r}
+# Workspace:
+setwd("~/JCU/MB5370/Module 4/R Script") #sets work directory
+```
+
+# Workshop 03
+
+#4.3 Git and Github
+```{r}
+#install.packages("usethis")
+library(usethis)
+use_git_config(user.name = "cimf97", user.email = "carolinafreitas97_@hotmail.com")
+#new_path <- "C:/Program Files/Git/bin/git.exe"
+#Sys.setenv(PATH = paste(new_path, Sys.getenv("PATH"), sep = ";"))
+```
+
+```{r}
+# Display  version of git
+git --version
+    
+# replace USER with the Github user account
+git config --global user.name cimf97
+    
+# replace NAME@EMAIL.EDU with the email used to register with Github
+git config --global user.email carolinafreitas97_@hotmail.com
+    
+# list your config to confirm user
+git config --list
+
+```
+
+
+
